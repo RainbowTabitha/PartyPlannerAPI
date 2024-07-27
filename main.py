@@ -8,11 +8,11 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
 from fastapi import FastAPI, Query, Path
-from urllib.parse import urlparse, urlsplit, urlunsplit, quote
+from urllib.parse import urlparse, urlsplit, urlunsplit, quoteg
 import re
 import requests
 
-app = FastAPI()
+app = FastAPI(title='PartyPlanner64 API')
 
 def fetch_files(id: int, file_id: int = None):
     url = f"https://mariopartylegacy.com/forum/downloads/{id}/history"
@@ -253,9 +253,9 @@ def fetch_project(id: int):
 
 @app.get("/project/search")
 async def search_for_projects(
-    search_term: str = Query(None, description="The string to search for"), 
+    searchTerm: str = Query(None, description="The string to search for"), 
     gameId: int = Query(None, description="The ID of the game to filter by")):
-    projects = search_projects(search_term, gameId)
+    projects = search_projects(searchTerm, gameId)
     if projects:
         return projects
     else:
