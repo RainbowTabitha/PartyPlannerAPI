@@ -8,7 +8,7 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
 from fastapi import FastAPI, Query, Path
-from urllib.parse import urlparse, urlsplit, urlunsplit, quoteg
+from urllib.parse import urlparse, urlsplit, urlunsplit, quote
 import re
 import requests
 
