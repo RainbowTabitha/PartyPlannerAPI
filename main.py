@@ -8,7 +8,7 @@
 from bs4 import BeautifulSoup
 from datetime import datetime
 from fastapi import FastAPI, Query, Path
-from urllib.parse import urlparse, urlsplit, urlunsplit
+from urllib.parse import urlparse, urlsplit, urlunsplit, quote
 import re
 import requests
 
@@ -82,25 +82,60 @@ def fetch_files(id: int, file_id: int = None):
     return versions
 
 def search_projects(term: str, gameId: int = None):
-    url = f"https://www.mariopartylegacy.com/forum/search/search?search_type=resource&keywords={term}&t=resource&c[categories][0]=1&c[nodes]=1&c[title_only]=1&o=date"
+    # URL encode the search term
+    encoded_term = quote(term)
+    
+    # Construct the URL with the encoded search term
+    url = f"https://www.mariopartylegacy.com/forum/search/search?search_type=resource&keywords={encoded_term}&t=resource&c[categories][0]=1&c[nodes]=1&c[title_only]=1&o=date"
+    
+    # Send the HTTP request
     response = requests.get(url)
     response.raise_for_status()
+    
+    # Parse the HTML response
     soup = BeautifulSoup(response.text, 'html.parser')
 
     results = []
 
+    # Iterate over each <h3> tag with class 'contentRow-title'
     for content in soup.find_all('h3', class_='contentRow-title'):
-        title_text = content.text.strip()
-        for prefix in ["MP1", "MP2", "MP3"]:
-            if title_text.startswith(prefix):
-                name = title_text[len(prefix):].split('\n')[0][1:]
-                extracted_gameId = int(prefix.strip()[2:])
-                if gameId is None or extracted_gameId == gameId:
-                    project_info = {
-                        "name": name,
-                        "gameId": extracted_gameId
-                    }
-                    results.append(project_info)
+        # Find the <a> tag within <h3>
+        link_tag = content.find('a')
+        if link_tag and 'href' in link_tag.attrs:
+            href = link_tag['href']
+            print("Full href:", href)  # Debugging line
+            
+            # Update the regex pattern to capture the number after the dot
+            project_id_match = re.search(r'/downloads/[^.]+(?:\.(\d+))/', href)
+            if project_id_match:
+                project_id_str = project_id_match.group(1)
+                try:
+                    project_id = int(project_id_str)
+                except ValueError:
+                    continue  # Skip if project_id is not a valid integer
+            else:
+                continue  # Skip if project_id cannot be extracted
+            
+            # Extract title and prefix
+            title_text = link_tag.text.strip()
+            name = None
+            extracted_gameId = None
+
+            # Extract the prefix and name
+            for prefix in ["MP1", "MP2", "MP3"]:
+                if title_text.startswith(prefix):
+                    name = title_text[len(prefix):].split('\n')[0].strip()
+                    extracted_gameId = int(prefix.strip()[2:])
+                    
+                    # Check if the extracted_gameId matches the provided gameId
+                    if gameId is None or extracted_gameId == gameId:
+                        project_info = {
+                            "name": name,
+                            "gameId": extracted_gameId,
+                            "projectId": project_id
+                        }
+                        results.append(project_info)
+
     return results
 
 def fetch_project(id: int):
