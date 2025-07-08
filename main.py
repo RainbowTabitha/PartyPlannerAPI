@@ -289,6 +289,10 @@ async def get_top_boards(max: int = Query(50, description="Maximum number of boa
             if title_tag:
                 board['name'] = title_tag.text.strip()
                 board['link'] = 'https://www.mariopartylegacy.com' + title_tag['href']
+                # Extract id from the link, e.g. /forum/downloads/board-name.123/ -> 123
+                match = re.search(r'\.(\d+)/', title_tag['href'])
+                if match:
+                    board['id'] = int(match.group(1))
             creator_tag = item.find('a', class_='username')
             if creator_tag:
                 board['creator'] = creator_tag.text.strip()
