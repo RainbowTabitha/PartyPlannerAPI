@@ -9,11 +9,20 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from fastapi import FastAPI, Query, Path, Response as FastAPIResponse, Request as FastAPIRequest
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from urllib.parse import urlparse, urlsplit, urlunsplit, quote
 import re
 import requests
 
 app = FastAPI(title='PartyPlanner64 API')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def fetch_files(id: int, file_id: int = None):
     url = f"https://mariopartylegacy.com/forum/downloads/{id}/history"
