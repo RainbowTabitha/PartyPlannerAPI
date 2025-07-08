@@ -7,7 +7,8 @@
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-from fastapi import FastAPI, Query, Path
+from fastapi import FastAPI, Query, Path, Response as FastAPIResponse, Request as FastAPIRequest
+from fastapi.responses import StreamingResponse
 from urllib.parse import urlparse, urlsplit, urlunsplit, quote
 import re
 import requests
@@ -284,4 +285,21 @@ async def get_project_file_info(projectId: int = Path(..., description="The Proj
         return versions[0]
     else:
         return {"error": "File not found"}
+
+@app.get("/cors_bypass")
+async def cors_bypass(url: str = Query(..., description="The URL to fetch via the CORS proxy")):
+    try:
+        r = requests.get(url, stream=True)
+        headers = dict(r.headers)
+        # Set CORS headers
+        headers['Access-Control-Allow-Origin'] = '*'
+        headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return FastAPIResponse(
+            content=r.content,
+            status_code=r.status_code,
+            headers=headers
+        )
+    except Exception as e:
+        return FastAPIResponse(f'Error: {str(e)}', status_code=500)
    
