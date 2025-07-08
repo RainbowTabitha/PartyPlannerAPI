@@ -295,6 +295,45 @@ async def get_project_file_info(projectId: int = Path(..., description="The Proj
     else:
         return {"error": "File not found"}
 
+@app.get("/project/top")
+async def get_top_boards():
+    url = "https://www.mariopartylegacy.com/forum/downloads/categories/boards.1/"
+    response = requests.get(url)
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'html.parser')
+    boards = []
+    # Find all board entries (each board is in a div with class 'structItem--resource')
+    for item in soup.find_all('div', class_='structItem--resource'):
+        board = {}
+        # Title and link
+        title_tag = item.find('div', class_='structItem-title').find('a')
+        if title_tag:
+            board['name'] = title_tag.text.strip()
+            board['link'] = 'https://www.mariopartylegacy.com' + title_tag['href']
+        # Creator
+        creator_tag = item.find('a', class_='username')
+        if creator_tag:
+            board['creator'] = creator_tag.text.strip()
+        # Downloads, Views, Version, Updated
+        meta = item.find_all('dl', class_='pairs pairs--justified')
+        for pair in meta:
+            dt = pair.find('dt')
+            dd = pair.find('dd')
+            if not dt or not dd:
+                continue
+            label = dt.text.strip().lower()
+            value = dd.text.strip()
+            if 'downloads' in label:
+                board['downloads'] = value
+            elif 'views' in label:
+                board['views'] = value
+            elif 'version' in label:
+                board['version'] = value
+            elif 'updated' in label:
+                board['updated'] = value
+        boards.append(board)
+    return boards
+
 @app.get("/cors_bypass")
 async def cors_bypass(url: str = Query(..., description="The URL to fetch via the CORS proxy")):
     try:
