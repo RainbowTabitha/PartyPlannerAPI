@@ -271,30 +271,6 @@ async def search_for_projects(
     else:
         return {"error": "No results"}
 
-@app.get("/project/{projectId}")
-async def get_project_info(projectId: int = Path(..., description="The Project ID of the project to lookup.")):
-    project = fetch_project(projectId)
-    if project:
-        return project
-    else:
-        return {"error": "Project not found"}
-
-@app.get("/project/{projectId}/files")
-async def get_project_files(projectId: int = Path(..., description="The Project ID of the project to lookup.")):
-    versions = fetch_files(projectId)
-    if versions:
-        return {"projectId": projectId, "versions": versions}
-    else:
-        return {"error": "Files not found"}
-
-@app.get("/project/{projectId}/files/{fileId}")
-async def get_project_file_info(projectId: int = Path(..., description="The Project ID of the project to lookup."), fileId: int = Path(..., description="The File ID of the project to lookup.")):
-    versions = fetch_files(projectId, file_id=fileId)
-    if versions:
-        return versions[0]
-    else:
-        return {"error": "File not found"}
-
 @app.get("/project/top")
 async def get_top_boards():
     url = "https://www.mariopartylegacy.com/forum/downloads/categories/boards.1/"
@@ -333,6 +309,30 @@ async def get_top_boards():
                 board['updated'] = value
         boards.append(board)
     return boards
+
+@app.get("/project/{projectId}")
+async def get_project_info(projectId: int = Path(..., description="The Project ID of the project to lookup.")):
+    project = fetch_project(projectId)
+    if project:
+        return project
+    else:
+        return {"error": "Project not found"}
+
+@app.get("/project/{projectId}/files")
+async def get_project_files(projectId: int = Path(..., description="The Project ID of the project to lookup.")):
+    versions = fetch_files(projectId)
+    if versions:
+        return {"projectId": projectId, "versions": versions}
+    else:
+        return {"error": "Files not found"}
+
+@app.get("/project/{projectId}/files/{fileId}")
+async def get_project_file_info(projectId: int = Path(..., description="The Project ID of the project to lookup."), fileId: int = Path(..., description="The File ID of the project to lookup.")):
+    versions = fetch_files(projectId, file_id=fileId)
+    if versions:
+        return versions[0]
+    else:
+        return {"error": "File not found"}
 
 @app.get("/cors_bypass")
 async def cors_bypass(url: str = Query(..., description="The URL to fetch via the CORS proxy")):
